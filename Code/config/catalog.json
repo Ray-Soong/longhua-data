@@ -1,0 +1,28 @@
+{
+  "Catalog": {
+    "Manufacturer": "HUAZH",
+    "Models": [
+      { "ModelName": "SLS600", "DeviceType": "warehouse" },
+      { "ModelName": "SLS600-FLOOR", "DeviceType": "floor" },
+      { "ModelName": "SLS600-CONVEYOR-INTERFACE", "DeviceType": "conveyor-interface" },
+      { "ModelName": "SLS600-GOOD-LIFT", "DeviceType": "good-lift" },
+      { "ModelName": "SLS600-TEMPORARY", "DeviceType": "temporary" },
+      { "ModelName": "SLS600-RGV", "DeviceType": "rgv" },
+      { "ModelName": "SLS600-RGV-LIFT", "DeviceType": "rgv-lift" }
+    ],
+    "EventKinds": [
+      { "Suffix": "TASK-ASSIGN", "EventKind": "Command", "File": "task" },
+      { "Suffix": "TASK-MODIFY", "EventKind": "Command", "File": "task" },
+      { "Suffix": "TASK-CANCEL", "EventKind": "Command", "File": "task" },
+      { "Suffix": "TASK-DELETE", "EventKind": "Command", "File": "task" },
+      { "Suffix": "TASK-ASSIGN-CALLBACK", "EventKind": "Callback", "File": "task" },
+      { "Suffix": "TASK-MODIFY-CALLBACK", "EventKind": "Callback", "File": "task" },
+      { "Suffix": "TASK-CANCEL-CALLBACK", "EventKind": "Callback", "File": "task" },
+      { "Suffix": "TASK-DELETE-CALLBACK", "EventKind": "Callback", "File": "task" },
+      { "Suffix": "TASK/STATE", "EventKind": "TaskState", "File": "task" },
+      { "Suffix": "STATE", "EventKind": "DeviceState" },
+      { "Suffix": "SCAN", "EventKind": "Scan" },
+      { "Suffix": "HEALTH", "EventKind": "Health" }
+    ]
+  }
+}

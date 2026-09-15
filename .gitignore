@@ -1,0 +1,7 @@
+*.pdf
+*.docx
+**/bin/
+**/obj/
+**/data/
+**/publish/
+appsettings.Local.json

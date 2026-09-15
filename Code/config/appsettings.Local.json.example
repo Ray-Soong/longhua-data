@@ -1,0 +1,20 @@
+{
+  "Collector": {
+    "DataRoot": "data",
+    "Sources": [
+      {
+        "Id": "mqtt-sls600",
+        "Protocol": "Mqtt",
+        "Enabled": true,
+        "Mqtt": {
+          "Host": "10.0.0.10",
+          "Port": 1883,
+          "UseTls": false,
+          "ClientId": "longhua-collector",
+          "Username": "collector",
+          "Password": "change-me"
+        }
+      }
+    ]
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "Longhua.Collector": {
+      "commandName": "Project",
+      "environmentVariables": {
+        "DOTNET_ENVIRONMENT": "Development"
+      }
+    }
+  }
+}
