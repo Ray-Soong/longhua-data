@@ -17,7 +17,7 @@ public sealed class CollectorOptions
 
     public int DedupCacheSize { get; set; } = 10_000;
 
-    public List<SourceOptions> Sources { get; set; } = [];
+    public List<SourceOptions> Sources { get; set; } = new();
 
     public FileSinkOptions FileSink { get; set; } = new();
 }
@@ -67,7 +67,7 @@ public sealed class MqttSourceOptions
 
     public int ReconnectMaxSeconds { get; set; } = 30;
 
-    public List<MqttSubscriptionOptions> Subscriptions { get; set; } = [];
+    public List<MqttSubscriptionOptions> Subscriptions { get; set; } = new();
 }
 
 public sealed class MqttSubscriptionOptions
@@ -87,7 +87,7 @@ public sealed class S7SourceOptions
 
     public int Slot { get; set; } = 1;
 
-    public List<S7PollOptions> Polls { get; set; } = [];
+    public List<S7PollOptions> Polls { get; set; } = new();
 }
 
 public sealed class S7PollOptions
@@ -115,9 +115,9 @@ public sealed class CatalogOptions
 
     public string? Manufacturer { get; set; } = "HUAZH";
 
-    public List<CatalogModelOptions> Models { get; set; } = [];
+    public List<CatalogModelOptions> Models { get; set; } = new();
 
-    public List<CatalogEventOptions> EventKinds { get; set; } = [];
+    public List<CatalogEventOptions> EventKinds { get; set; } = new();
 }
 
 public sealed class CatalogModelOptions

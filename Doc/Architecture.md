@@ -240,7 +240,7 @@ S7 适配器内部：
 
 | 项 | 选择 |
 |---|---|
-| 运行时 | .NET 8 Worker，可装 Windows 服务 |
+| 运行时 | .NET 6 Worker（`global.json` 钉 6.0.203，兼容 VS 2019 / MSBuild 16.11），可装 Windows 服务 |
 | MQTT | MQTTnet |
 | S7 | Sharp7 或 S7.Net Plus（二期） |
 | 配置 | `appsettings` + 设备目录；热路径不改代码 |

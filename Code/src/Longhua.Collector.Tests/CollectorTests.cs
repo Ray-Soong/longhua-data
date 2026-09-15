@@ -1,8 +1,8 @@
 using Longhua.Collector.Abstractions;
-using Xunit;
 using Longhua.Collector.Configuration;
 using Longhua.Collector.Mqtt;
 using Longhua.Collector.Pipeline;
+using Xunit;
 
 namespace Longhua.Collector.Tests;
 
@@ -53,18 +53,18 @@ public class FrameNormalizerTests
         var catalog = new DeviceCatalog(new CatalogOptions
         {
             Manufacturer = "HUAZH",
-            Models =
-            [
+            Models = new List<CatalogModelOptions>
+            {
                 new CatalogModelOptions { ModelName = "SLS600", DeviceType = "warehouse" },
                 new CatalogModelOptions { ModelName = "SLS600-RGV", DeviceType = "rgv" }
-            ],
-            EventKinds =
-            [
+            },
+            EventKinds = new List<CatalogEventOptions>
+            {
                 new CatalogEventOptions { Suffix = "TASK-ASSIGN", EventKind = "Command", File = "task" },
                 new CatalogEventOptions { Suffix = "TASK/STATE", EventKind = "TaskState", File = "task" },
                 new CatalogEventOptions { Suffix = "STATE", EventKind = "DeviceState" },
                 new CatalogEventOptions { Suffix = "HEALTH", EventKind = "Health" }
-            ]
+            }
         });
         return new FrameNormalizer(catalog);
     }
@@ -86,7 +86,7 @@ public class FrameNormalizerTests
     {
         var result = CreateNormalizer().Normalize(Frame(
             "SLS600/V1/HUAZH/W1/STATE",
-            """{"warehouseNo":"1","offOnStatus":true,"timestamp":"2017-04-15T11:40:03.12Z"}"""));
+            "{\"warehouseNo\":\"1\",\"offOnStatus\":true,\"timestamp\":\"2017-04-15T11:40:03.12Z\"}"));
 
         Assert.Null(result.DeadLetter);
         Assert.Equal("warehouse", result.Record!.DeviceType);
@@ -101,7 +101,7 @@ public class FrameNormalizerTests
     {
         var result = CreateNormalizer().Normalize(Frame(
             "SLS600/V1/HUAZH/W1/TASK-ASSIGN",
-            """{"taskId":89801,"taskType":1,"timestamp":"2017-04-15T11:40:03.12Z"}"""));
+            "{\"taskId\":89801,\"taskType\":1,\"timestamp\":\"2017-04-15T11:40:03.12Z\"}"));
 
         Assert.Equal("Command", result.Record!.EventKind);
         Assert.Equal("task", result.Record.FileStem);
@@ -112,7 +112,7 @@ public class FrameNormalizerTests
     {
         var result = CreateNormalizer().Normalize(Frame(
             "SLS600/V1/HUAZH/W1/TASK-ASSIGN-CALLBACK",
-            """{"taskId":1,"success":true,"timestamp":"2017-04-15T11:40:03.12Z"}"""));
+            "{\"taskId\":1,\"success\":true,\"timestamp\":\"2017-04-15T11:40:03.12Z\"}"));
 
         Assert.Null(result.DeadLetter);
         Assert.Equal("Callback", result.Record!.EventKind);
@@ -124,7 +124,7 @@ public class FrameNormalizerTests
     {
         var result = CreateNormalizer().Normalize(Frame(
             "SLS600/V1/HUAZH/W1/HEALTH",
-            """{"warehouseNo":"2","status":1,"timestamp":"2017-04-15T11:40: 03.12Z"}"""));
+            "{\"warehouseNo\":\"2\",\"status\":1,\"timestamp\":\"2017-04-15T11:40: 03.12Z\"}"));
 
         Assert.Null(result.DeadLetter);
         Assert.Equal("Health", result.Record!.EventKind);
@@ -136,7 +136,7 @@ public class FrameNormalizerTests
     {
         var result = CreateNormalizer().Normalize(Frame(
             "SLS600/V1/HUAZH/W1/STATE",
-            """{"warehouseNo":"1"}"""));
+            "{\"warehouseNo\":\"1\"}"));
 
         Assert.Equal("missing-timestamp", result.DeadLetter!.Reason);
     }
@@ -146,7 +146,7 @@ public class FrameNormalizerTests
     {
         var result = CreateNormalizer().Normalize(Frame(
             "OTHER/V1/HUAZH/X1/STATE",
-            """{"timestamp":"2017-04-15T11:40:03.12Z"}"""));
+            "{\"timestamp\":\"2017-04-15T11:40:03.12Z\"}"));
 
         Assert.Equal("unknown-model", result.DeadLetter!.Reason);
     }

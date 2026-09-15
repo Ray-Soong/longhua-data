@@ -66,7 +66,7 @@ public sealed class HealthWatch
         lock (_devices)
         {
             var now = DateTimeOffset.UtcNow;
-            stale = [];
+            stale = new List<DeviceHealth>();
             foreach (var pair in _devices.ToList())
             {
                 var item = pair.Value;

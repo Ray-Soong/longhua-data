@@ -5,75 +5,86 @@ using Longhua.Collector.Configuration;
 using Longhua.Collector.Persistence;
 using Longhua.Collector.Pipeline;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Hosting.WindowsServices;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
-var settings = new HostApplicationBuilderSettings { Args = args };
-if (WindowsServiceHelpers.IsWindowsService())
-{
-    Directory.SetCurrentDirectory(AppContext.BaseDirectory);
-    settings.ContentRootPath = AppContext.BaseDirectory;
-}
+string? configDir = null;
 
-var builder = Host.CreateApplicationBuilder(settings);
-if (WindowsServiceHelpers.IsWindowsService())
-{
-    builder.Services.AddWindowsService(options => options.ServiceName = "LonghuaCollector");
-}
-
-var configDir = ConfigPaths.ResolveConfigDir(builder.Environment.ContentRootPath);
-builder.Configuration.Sources.Clear();
-builder.Configuration
-    .AddJsonFile(Path.Combine(configDir, "appsettings.json"), optional: false, reloadOnChange: true)
-    .AddJsonFile(Path.Combine(configDir, "catalog.json"), optional: false, reloadOnChange: true)
-    .AddJsonFile(Path.Combine(configDir, $"appsettings.{builder.Environment.EnvironmentName}.json"), optional: true, reloadOnChange: true)
-    .AddJsonFile(Path.Combine(configDir, "appsettings.Local.json"), optional: true, reloadOnChange: true)
-    .AddEnvironmentVariables()
-    .AddCommandLine(args);
-
-builder.Services.Configure<CollectorOptions>(builder.Configuration.GetSection(CollectorOptions.SectionName));
-builder.Services.Configure<CatalogOptions>(builder.Configuration.GetSection(CatalogOptions.SectionName));
-builder.Services.PostConfigure<CollectorOptions>(options =>
-{
-    options.DataRoot = ConfigPaths.ResolveDataRoot(options.DataRoot, configDir);
-    Directory.CreateDirectory(options.DataRoot);
-});
-
-builder.Services.AddSingleton(sp =>
-{
-    var options = sp.GetRequiredService<IOptions<CollectorOptions>>().Value;
-    return TimeZoneHelper.Resolve(options.TimeZone);
-});
-
-builder.Services.AddSingleton(sp =>
-{
-    var catalog = sp.GetRequiredService<IOptions<CatalogOptions>>().Value;
-    return DeviceCatalog.FromOptions(catalog);
-});
-
-builder.Services.AddSingleton<FrameNormalizer>();
-builder.Services.AddSingleton<CollectorMetrics>();
-builder.Services.AddSingleton(sp =>
-{
-    var options = sp.GetRequiredService<IOptions<CollectorOptions>>().Value;
-    var capacity = Math.Max(100, options.RawChannelCapacity);
-    return Channel.CreateBounded<RawFrame>(new BoundedChannelOptions(capacity)
+var hostBuilder = Host.CreateDefaultBuilder(args)
+    .UseWindowsService(options => options.ServiceName = "LonghuaCollector")
+    .ConfigureAppConfiguration((ctx, config) =>
     {
-        SingleReader = true,
-        SingleWriter = false,
-        FullMode = BoundedChannelFullMode.Wait
-    });
-});
-builder.Services.AddSingleton(sp => sp.GetRequiredService<Channel<RawFrame>>().Writer);
-builder.Services.AddSingleton<ITelemetrySink, FileTelemetrySink>();
-builder.Services.AddSingleton<HealthWatch>();
-builder.Services.AddSingleton<DataSourceFactory>();
-builder.Services.AddHostedService<CollectorWorker>();
+        if (WindowsServiceHelpers.IsWindowsService())
+        {
+            Directory.SetCurrentDirectory(AppContext.BaseDirectory);
+        }
 
-var host = builder.Build();
+        configDir = ConfigPaths.ResolveConfigDir(ctx.HostingEnvironment.ContentRootPath);
+        config.Sources.Clear();
+        config
+            .AddJsonFile(Path.Combine(configDir, "appsettings.json"), optional: false, reloadOnChange: true)
+            .AddJsonFile(Path.Combine(configDir, "catalog.json"), optional: false, reloadOnChange: true)
+            .AddJsonFile(Path.Combine(configDir, $"appsettings.{ctx.HostingEnvironment.EnvironmentName}.json"), optional: true, reloadOnChange: true)
+            .AddJsonFile(Path.Combine(configDir, "appsettings.Local.json"), optional: true, reloadOnChange: true)
+            .AddEnvironmentVariables()
+            .AddCommandLine(args);
+    })
+    .ConfigureServices((ctx, services) =>
+    {
+        var dir = configDir ?? ConfigPaths.ResolveConfigDir(ctx.HostingEnvironment.ContentRootPath);
+        services.Configure<CollectorOptions>(ctx.Configuration.GetSection(CollectorOptions.SectionName));
+        services.Configure<CatalogOptions>(ctx.Configuration.GetSection(CatalogOptions.SectionName));
+        services.PostConfigure<CollectorOptions>(options =>
+        {
+            options.DataRoot = ConfigPaths.ResolveDataRoot(options.DataRoot, dir);
+            Directory.CreateDirectory(options.DataRoot);
+        });
+
+        services.AddSingleton(sp =>
+        {
+            var options = sp.GetRequiredService<IOptions<CollectorOptions>>().Value;
+            return TimeZoneHelper.Resolve(options.TimeZone);
+        });
+        services.AddSingleton(sp =>
+        {
+            var catalog = sp.GetRequiredService<IOptions<CatalogOptions>>().Value;
+            return DeviceCatalog.FromOptions(catalog);
+        });
+        services.AddSingleton<FrameNormalizer>();
+        services.AddSingleton<CollectorMetrics>();
+        services.AddSingleton(sp =>
+        {
+            var options = sp.GetRequiredService<IOptions<CollectorOptions>>().Value;
+            var capacity = Math.Max(100, options.RawChannelCapacity);
+            return Channel.CreateBounded<RawFrame>(new BoundedChannelOptions(capacity)
+            {
+                SingleReader = true,
+                SingleWriter = false,
+                FullMode = BoundedChannelFullMode.Wait
+            });
+        });
+        services.AddSingleton(sp => sp.GetRequiredService<Channel<RawFrame>>().Writer);
+        services.AddSingleton<ITelemetrySink, FileTelemetrySink>();
+        services.AddSingleton<HealthWatch>();
+        services.AddSingleton<DataSourceFactory>();
+        services.AddHostedService<CollectorWorker>();
+    });
+
+if (WindowsServiceHelpers.IsWindowsService())
+{
+    hostBuilder.UseContentRoot(AppContext.BaseDirectory);
+}
+
+var host = hostBuilder.Build();
 var logger = host.Services.GetRequiredService<ILogger<Program>>();
 var collector = host.Services.GetRequiredService<IOptions<CollectorOptions>>().Value;
-logger.LogInformation("配置目录 {ConfigDir}，数据目录 {DataRoot}", configDir, collector.DataRoot);
+logger.LogInformation(
+    "配置目录 {ConfigDir}，数据目录 {DataRoot}",
+    configDir ?? "(未解析)",
+    collector.DataRoot);
 await host.RunAsync();
 
 internal static class ConfigPaths

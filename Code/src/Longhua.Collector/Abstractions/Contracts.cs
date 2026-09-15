@@ -28,11 +28,11 @@ public enum DataQuality
 
 public sealed class RawFrame
 {
-    public required string SourceId { get; init; }
-    public required ProtocolKind Protocol { get; init; }
-    public required string Identity { get; init; }
-    public required DateTimeOffset CapturedAtUtc { get; init; }
-    public byte[] PayloadBytes { get; init; } = [];
+    public string SourceId { get; init; } = "";
+    public ProtocolKind Protocol { get; init; }
+    public string Identity { get; init; } = "";
+    public DateTimeOffset CapturedAtUtc { get; init; }
+    public byte[] PayloadBytes { get; init; } = Array.Empty<byte>();
     public string? PayloadText { get; init; }
     public int? MqttQoS { get; init; }
     public bool IsRetained { get; init; }
@@ -41,17 +41,17 @@ public sealed class RawFrame
 
 public sealed class TelemetryRecord
 {
-    public required string RecordId { get; init; }
-    public required DateTimeOffset ReceivedAtUtc { get; init; }
+    public string RecordId { get; init; } = "";
+    public DateTimeOffset ReceivedAtUtc { get; init; }
     public DateTimeOffset? SourceTimestamp { get; init; }
-    public required string Protocol { get; init; }
-    public required string SourceId { get; init; }
-    public required string DeviceType { get; init; }
-    public required string DeviceId { get; init; }
-    public required string Identity { get; init; }
-    public required string EventKind { get; init; }
+    public string Protocol { get; init; } = "";
+    public string SourceId { get; init; } = "";
+    public string DeviceType { get; init; } = "";
+    public string DeviceId { get; init; } = "";
+    public string Identity { get; init; } = "";
+    public string EventKind { get; init; } = "";
     public bool IsRetained { get; init; }
-    public required string Quality { get; init; }
+    public string Quality { get; init; } = "";
     public JsonElement? Payload { get; init; }
 
     [JsonIgnore]
@@ -60,11 +60,11 @@ public sealed class TelemetryRecord
 
 public sealed class DeadLetterRecord
 {
-    public required DateTimeOffset ReceivedAtUtc { get; init; }
-    public required string SourceId { get; init; }
-    public required string Protocol { get; init; }
-    public required string Identity { get; init; }
-    public required string Reason { get; init; }
+    public DateTimeOffset ReceivedAtUtc { get; init; }
+    public string SourceId { get; init; } = "";
+    public string Protocol { get; init; } = "";
+    public string Identity { get; init; } = "";
+    public string Reason { get; init; } = "";
     public bool IsRetained { get; init; }
     public string? PayloadText { get; init; }
 }

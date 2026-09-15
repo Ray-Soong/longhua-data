@@ -178,7 +178,7 @@ public sealed class MqttDataSource : IDataSource
     private async Task SubscribeAsync(IMqttClient client, CancellationToken cancellationToken)
     {
         var subscriptions = _mqtt.Subscriptions.Count == 0
-            ? [new MqttSubscriptionOptions()]
+            ? new List<MqttSubscriptionOptions> { new MqttSubscriptionOptions() }
             : _mqtt.Subscriptions;
 
         var subscribe = new MqttClientSubscribeOptionsBuilder();
@@ -238,7 +238,7 @@ public sealed class MqttDataSource : IDataSource
         }
 
 #pragma warning disable CS0618
-        return message.Payload ?? [];
+        return message.Payload ?? Array.Empty<byte>();
 #pragma warning restore CS0618
     }
 }

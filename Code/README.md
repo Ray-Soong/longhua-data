@@ -68,12 +68,20 @@ S7 源：`Enabled` 保持 `false`。打开只会打警告，不会读 PLC。点�
 
 ## 运行
 
-需要 .NET 8 SDK。
+需要 **.NET 6 SDK 6.0.2xx**（不要用 6.0.4xx / 8.x 在 VS 2019 里打开）。仓库已用 `global.json` 钉在 `6.0.203`，且只允许同 band 的 patch 滚动。
+
+Visual Studio 2019（MSBuild 16.11）无法加载较新 SDK。请在那台电脑安装：
+
+- [.NET 6.0.203 SDK](https://dotnet.microsoft.com/download/dotnet/6.0)（6.0.1xx / 6.0.2xx 均可）
+- 或改用 Visual Studio 2022 / `dotnet` 命令行
 
 ```bash
 cd Code
+dotnet --version
 dotnet run --project src/Longhua.Collector/Longhua.Collector.csproj
 ```
+
+`dotnet --version` 应显示 `6.0.2xx`。若仍是 `6.0.4xx`，说明没读到 `global.json`，或尚未安装 6.0.2xx。
 
 发布：
 

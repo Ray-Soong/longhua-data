@@ -267,9 +267,9 @@ public sealed class FileTelemetrySink : ITelemetrySink, IDisposable
     private sealed class RawFileRecord
     {
         public DateTimeOffset CapturedAtUtc { get; init; }
-        public required string SourceId { get; init; }
-        public required string Protocol { get; init; }
-        public required string Identity { get; init; }
+        public string SourceId { get; init; } = "";
+        public string Protocol { get; init; } = "";
+        public string Identity { get; init; } = "";
         public int? Qos { get; init; }
         public bool IsRetained { get; init; }
         public string? ClientId { get; init; }
