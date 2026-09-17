@@ -94,10 +94,12 @@ D:\龙华采集\
 
 ```
 配置目录 ...\config，数据目录 ...\data
-启动 1 个采集源
-MQTT 已连接 Source=mqtt-sls600 Broker=（你填的IP）:1883
+启动 1 个采集源，数据目录 ...\data
+MQTT 已连接 Source=mqtt-sls600 Broker=（你填的IP）:1883 ClientId=longhua-collector LinkId=（一串字母数字）
 Application started.
 ```
+
+`LinkId` 是本次连接标识，和配置里的 `ClientId` 不是一回事；重启或重连后 `LinkId` 会变。
 
 **不要关这个窗口。** 关掉就等于停止采集。可以把它最小化。
 
@@ -194,8 +196,8 @@ dotnet publish src\Longhua.Collector\Longhua.Collector.csproj -c Release -r win-
 **一直 `MQTT 连接失败` / Connection refused**  
 `Host`、`Port` 填错；电脑和立库不在同一网络；防火墙拦了 1883。先用现场网络确认能 ping 通 Broker IP。
 
-**已连接，但 `data` 是空的或 raw 不增长**  
-Broker 暂时没有立体库报文。确认订阅没被改掉（默认 `+/+/HUAZH/#`）。连上时若现场有保留状态，一般会先收到一批。
+**已连接，但 `collect.jsonl` 不增长**  
+默认只写这一个文件，不会出现 `raw\` 目录。可能原因：Broker 暂时没有报文；或 `config\appsettings.json` 里 19 条 `Subscriptions` 的 Topic 和现场不一致。连上时若现场有保留状态，一般会先收到一批。窗口里 `采集统计` 的 `Received` 在增加、`Events` 不增加，说明收到了但解析失败（缺 `timestamp`、不是 JSON、Topic 对不上）。
 
 **两台电脑互相掉线**  
 `ClientId` 重复了，改成每台不一样。
@@ -203,8 +205,8 @@ Broker 暂时没有立体库报文。确认订阅没被改掉（默认 `+/+/HUAZ
 **提示找不到 config/appsettings.json**  
 没有拷完整文件夹，或把 exe 单独拿出来运行了。必须在「整个程序文件夹」里启动。
 
-**dead-letter 里很多记录**  
-现场报文缺 `timestamp`、不是 JSON、或 Topic 与 `catalog.json` 对不上。把该文件发给维护人员。
+**解析失败看不到文件**  
+默认不写 `dead-letter\`。失败只打日志，`采集统计` 里 `DeadLetter` 会增加。需要落盘时，在 `FileSink` 把 `WriteDeadLetter` 改成 `true` 后重启。
 
 **改了配置没生效**  
 先停掉程序再改 JSON，保存后再启动。
