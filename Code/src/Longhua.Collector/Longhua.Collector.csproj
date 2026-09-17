@@ -13,6 +13,6 @@
     <None Include="..\..\config\appsettings.json" Link="config\appsettings.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="..\..\config\catalog.json" Link="config\catalog.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="..\..\config\appsettings.Local.json.example" Link="config\appsettings.Local.json.example" CopyToOutputDirectory="PreserveNewest" />
-    <None Include="..\..\..\Doc\使用手册.md" Link="使用说明.md" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\..\..\Doc\UserGuide.md" Link="使用说明.md" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 </Project>
