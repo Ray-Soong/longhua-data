@@ -30,6 +30,15 @@ public sealed class FileSinkOptions
     public long MaxFileBytes { get; set; } = 256L * 1024 * 1024;
 
     public int KeepDays { get; set; } = 30;
+
+    /// <summary>当天采集主文件名（不含扩展名）。所有规范化记录写入这一个文件，便于以后整文件导入数据库。</summary>
+    public string FileName { get; set; } = "collect";
+
+    /// <summary>是否额外写 raw/ 原包。默认关闭，先只保留一份统一记录。</summary>
+    public bool WriteRaw { get; set; }
+
+    /// <summary>是否把解析失败另写 dead-letter。默认关闭，避免拆成多文件。</summary>
+    public bool WriteDeadLetter { get; set; }
 }
 
 public sealed class SourceOptions
@@ -72,6 +81,12 @@ public sealed class MqttSourceOptions
 
 public sealed class MqttSubscriptionOptions
 {
+    /// <summary>数据类型，如 TaskAssign、TaskState、Rgv。多台同类设备共用一个 Type。</summary>
+    public string Type { get; set; } = "";
+
+    /// <summary>实例名，如 TaskAssign、Rgv1、Rgv2。</summary>
+    public string Name { get; set; } = "";
+
     public string Topic { get; set; } = "+/+/HUAZH/#";
 
     public int QoS { get; set; } = 1;

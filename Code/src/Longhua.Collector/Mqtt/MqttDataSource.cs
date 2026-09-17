@@ -20,6 +20,7 @@ public sealed class MqttDataSource : IDataSource
     private readonly MqttFactory _factory = new();
     private CancellationTokenSource? _cts;
     private Task? _loop;
+    private volatile string _sessionLinkId = "";
 
     public MqttDataSource(
         SourceOptions source,
@@ -91,11 +92,12 @@ public sealed class MqttDataSource : IDataSource
 
                 var options = BuildOptions();
                 await client.ConnectAsync(options, cancellationToken);
+                _sessionLinkId = Guid.NewGuid().ToString("N");
                 await SubscribeAsync(client, cancellationToken);
                 _metrics.MarkMqttConnected(Id);
                 _logger.LogInformation(
-                    "MQTT 已连接 Source={SourceId} Broker={Host}:{Port} ClientId={ClientId}",
-                    Id, _mqtt.Host, _mqtt.Port, _mqtt.ClientId);
+                    "MQTT 已连接 Source={SourceId} Broker={Host}:{Port} ClientId={ClientId} LinkId={LinkId}",
+                    Id, _mqtt.Host, _mqtt.Port, _mqtt.ClientId, _sessionLinkId);
 
                 delay = Math.Max(1, _mqtt.ReconnectMinSeconds);
                 using var linked = cancellationToken.Register(() => disconnected.TrySetCanceled(cancellationToken));
@@ -186,7 +188,13 @@ public sealed class MqttDataSource : IDataSource
         {
             var qos = (MqttQualityOfServiceLevel)Math.Clamp(item.QoS, 0, 2);
             subscribe.WithTopicFilter(item.Topic, qos);
-            _logger.LogInformation("MQTT 订阅 Source={SourceId} Topic={Topic} QoS={QoS}", Id, item.Topic, qos);
+            _logger.LogInformation(
+                "MQTT 订阅 Source={SourceId} Type={Type} Name={Name} Topic={Topic} QoS={QoS}",
+                Id,
+                string.IsNullOrWhiteSpace(item.Type) ? "-" : item.Type,
+                string.IsNullOrWhiteSpace(item.Name) ? "-" : item.Name,
+                item.Topic,
+                qos);
         }
 
         var result = await client.SubscribeAsync(subscribe.Build(), cancellationToken);
@@ -206,11 +214,15 @@ public sealed class MqttDataSource : IDataSource
             text = Encoding.UTF8.GetString(bytes);
         }
 
+        ResolveSubscription(message.Topic, out var dataType, out var name);
         var frame = new RawFrame
         {
             SourceId = Id,
             Protocol = ProtocolKind.Mqtt,
             Identity = message.Topic ?? "",
+            LinkId = _sessionLinkId,
+            DataType = dataType,
+            Name = name,
             CapturedAtUtc = DateTimeOffset.UtcNow,
             PayloadBytes = bytes,
             PayloadText = text,
@@ -227,6 +239,41 @@ public sealed class MqttDataSource : IDataSource
         }
 
         return Task.CompletedTask;
+    }
+
+    private void ResolveSubscription(string? topic, out string dataType, out string name)
+    {
+        dataType = "";
+        name = "";
+        if (string.IsNullOrWhiteSpace(topic))
+        {
+            return;
+        }
+
+        foreach (var item in _mqtt.Subscriptions)
+        {
+            if (!string.Equals(item.Topic, topic, StringComparison.OrdinalIgnoreCase))
+            {
+                continue;
+            }
+
+            name = string.IsNullOrWhiteSpace(item.Name) ? topic : item.Name;
+            dataType = string.IsNullOrWhiteSpace(item.Type) ? InferDataType(name) : item.Type;
+            return;
+        }
+
+        name = topic;
+    }
+
+    private static string InferDataType(string name)
+    {
+        var end = name.Length;
+        while (end > 0 && char.IsDigit(name[end - 1]))
+        {
+            end--;
+        }
+
+        return end > 0 ? name[..end] : name;
     }
 
     private static byte[] GetPayload(MqttApplicationMessage message)

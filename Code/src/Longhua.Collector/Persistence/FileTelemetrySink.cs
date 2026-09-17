@@ -26,6 +26,11 @@ public sealed class FileTelemetrySink : ITelemetrySink, IDisposable
 
     public ValueTask WriteRawAsync(RawFrame frame, CancellationToken cancellationToken)
     {
+        if (!_options.FileSink.WriteRaw)
+        {
+            return ValueTask.CompletedTask;
+        }
+
         var stem = Sanitize(frame.SourceId);
         var relative = Path.Combine(DateFolder(frame.CapturedAtUtc), "raw", stem + ".jsonl");
         var payloadJson = TryParseJson(frame.PayloadText);
@@ -48,14 +53,32 @@ public sealed class FileTelemetrySink : ITelemetrySink, IDisposable
 
     public ValueTask WriteEventAsync(TelemetryRecord record, CancellationToken cancellationToken)
     {
-        var stem = Sanitize(string.IsNullOrWhiteSpace(record.FileStem) ? record.DeviceType : record.FileStem);
-        var relative = Path.Combine(DateFolder(record.ReceivedAtUtc), "events", stem + ".jsonl");
-        WriteLine(relative, JsonSerializer.Serialize(record, JsonDefaults.File));
+        var stem = Sanitize(string.IsNullOrWhiteSpace(_options.FileSink.FileName) ? "collect" : _options.FileSink.FileName);
+        var relative = Path.Combine(DateFolder(record.ReceivedAtUtc), stem + ".jsonl");
+        var line = new CollectFileRecord
+        {
+            LinkId = record.LinkId,
+            DataType = record.DataType,
+            Name = string.IsNullOrWhiteSpace(record.Name) ? record.Identity : record.Name,
+            Timestamp = record.SourceTimestamp ?? record.ReceivedAtUtc,
+            Data = record.Payload
+        };
+        WriteLine(relative, JsonSerializer.Serialize(line, JsonDefaults.File));
         return ValueTask.CompletedTask;
     }
 
     public ValueTask WriteDeadLetterAsync(DeadLetterRecord record, CancellationToken cancellationToken)
     {
+        if (!_options.FileSink.WriteDeadLetter)
+        {
+            _logger.LogWarning(
+                "丢弃无法规范化的报文 Source={SourceId} Identity={Identity} Reason={Reason}",
+                record.SourceId,
+                record.Identity,
+                record.Reason);
+            return ValueTask.CompletedTask;
+        }
+
         var relative = Path.Combine(DateFolder(record.ReceivedAtUtc), "dead-letter", "parse-error.jsonl");
         WriteLine(relative, JsonSerializer.Serialize(record, JsonDefaults.File));
         return ValueTask.CompletedTask;
@@ -262,6 +285,15 @@ public sealed class FileTelemetrySink : ITelemetrySink, IDisposable
                 _writer.Dispose();
             }
         }
+    }
+
+    private sealed class CollectFileRecord
+    {
+        public string LinkId { get; init; } = "";
+        public string DataType { get; init; } = "";
+        public string Name { get; init; } = "";
+        public DateTimeOffset Timestamp { get; init; }
+        public JsonElement? Data { get; init; }
     }
 
     private sealed class RawFileRecord

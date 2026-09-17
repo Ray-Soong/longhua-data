@@ -5,3 +5,4 @@
 **/data/
 **/publish/
 appsettings.Local.json
+*.html

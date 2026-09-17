@@ -31,6 +31,10 @@ public sealed class RawFrame
     public string SourceId { get; init; } = "";
     public ProtocolKind Protocol { get; init; }
     public string Identity { get; init; } = "";
+    /// <summary>本次 MQTT 连接会话 ID，重连/重启后会变。</summary>
+    public string LinkId { get; init; } = "";
+    public string DataType { get; init; } = "";
+    public string Name { get; init; } = "";
     public DateTimeOffset CapturedAtUtc { get; init; }
     public byte[] PayloadBytes { get; init; } = Array.Empty<byte>();
     public string? PayloadText { get; init; }
@@ -49,6 +53,9 @@ public sealed class TelemetryRecord
     public string DeviceType { get; init; } = "";
     public string DeviceId { get; init; } = "";
     public string Identity { get; init; } = "";
+    public string LinkId { get; init; } = "";
+    public string DataType { get; init; } = "";
+    public string Name { get; init; } = "";
     public string EventKind { get; init; } = "";
     public bool IsRetained { get; init; }
     public string Quality { get; init; } = "";

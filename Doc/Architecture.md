@@ -159,8 +159,11 @@ MQTT JSON 与未来 S7 解码结果都进入同一信封。内核只认这一种
 | `SourceTimestamp` | 报文 `timestamp` 或 S7 轮询时刻 | 对照现场时钟、估延迟 |
 | `Protocol` | `Mqtt` \| `S7` | 回放时选择解码器 |
 | `SourceId` | 配置 | 哪一条采集源 |
-| `DeviceType` | Catalog | Warehouse / Floor / Rgv / … |
+| `DeviceType` | Catalog | Warehouse / Floor / Rgv / …（内部台账） |
 | `DeviceId` | Topic serial 或 S7 映射 | 台账主键 |
+| `LinkId` | MQTT 连接成功时生成，重连/重启后更换 | 区分同一次连接会话 |
+| `DataType` | 订阅配置 `Type` | 回放分类：`TaskAssign` / `TaskState` / `Rgv` / … |
+| `Name` | 订阅配置 `Name` | 回放实例：`Rgv1`、`Floor1State` 等 |
 | `Identity` | Topic 全文或 `s7://ip/db/off/len` | 原始寻址，不丢失 |
 | `EventKind` | Catalog | Command / State / Scan / … |
 | `IsRetained` | MQTT retain | 重连快照 vs 真实变化 |
@@ -175,33 +178,34 @@ MQTT JSON 与未来 S7 解码结果都进入同一信封。内核只认这一种
 
 一期落盘格式为 **JSONL 追加**，禁止写成一个巨大 JSON 数组（崩溃只会丢最后半行）。
 
-### 5.1 双通道
+### 5.1 落盘信封（回放主文件）
 
-| 目录 | 内容 |
-|---|---|
-| `raw/` | 原包：Topic、QoS、Retain、ClientId、字节/UTF-8 正文。S7 则为 DB 原始 hex。用于协议对账；规范化改版后可重放。 |
-| `events/` | `TelemetryRecord` JSONL，按设备类型分文件。回放、对账、后续导入数据库都读这一层。 |
-| `dead-letter/` | 非 JSON、缺 `timestamp`、未知 Topic。 |
+当天全部规范化记录写入 **一个** JSONL：`data/{yyyy-MM-dd}/collect.jsonl`。每一行是回放信封：
+
+```json
+{"linkId":"3f2a9c1b8e0d47a1b4c55e6f708192a3","dataType":"Rgv","name":"Rgv1","timestamp":"2017-04-15T11:40:03.12Z","data":{"warehouseNo":"1","carNo":1,"status":"1"}}
+```
+
+| 字段 | 来源 | 回放用法 |
+|---|---|---|
+| `linkId` | MQTT 连接成功时生成的会话 ID | 判断是否同一次连接；重启/重连后变化 |
+| `dataType` | 配置 `Subscriptions[].Type` | 按类型过滤（`Rgv`、`TaskAssign`） |
+| `name` | 配置 `Subscriptions[].Name` | 按实例过滤（`Rgv1`、`Rgv2`） |
+| `timestamp` | 报文 `timestamp`，缺省用接收时刻 | 按时间排序、按时码推进 |
+| `data` | MQTT / 未来 S7 原文 JSON | 业务内容原样重放 |
+
+`raw/`、`dead-letter/` 默认关闭；打开后仍按日分子目录，供协议对账。
 
 ### 5.2 目录约定
 
 ```
 data/{yyyy-MM-dd}/
-  raw/mqtt-sls600.jsonl
-  events/rgv.jsonl
-  events/task.jsonl
-  events/warehouse.jsonl
-  dead-letter/parse-error.jsonl
+  collect.jsonl
+  raw/mqtt-sls600.jsonl          ← WriteRaw=true 时
+  dead-letter/parse-error.jsonl  ← WriteDeadLetter=true 时
 ```
 
-| 路径 | 内容 |
-|---|---|
-| `data/2026-09-16/raw/mqtt-sls600.jsonl` | 该日全部 MQTT 原包 |
-| `data/2026-09-16/events/rgv.jsonl` | 规范化后的穿梭车状态 |
-| `data/2026-09-16/events/task.jsonl` | 任务命令、回调、`TASK/STATE` |
-| `data/2026-09-16/dead-letter/parse-error.jsonl` | 解析失败 |
-
-S7 接入后：`raw/` 多一种 hex 原块，`events/` 仍是同一套 `TelemetryRecord`，仅 `Protocol=S7`。
+S7 接入后仍写同一 `collect.jsonl`，`linkId` 为该次 S7 连接会话，`dataType`/`name` 用点表映射，`data` 为解码后的 JSON。
 
 ### 5.3 写入策略
 
@@ -230,7 +234,7 @@ S7 接入后：`raw/` 多一种 hex 原块，`events/` 仍是同一套 `Telemetr
 S7 适配器内部：
 
 - 一台 PLC 一个客户端，读操作串行（Sharp7 的 `S7Client` 不能多线程共用）。
-- 轮询完成后组 `RawFrame`；变化检测后再写 `events/`（否则周期快照会撑爆文件）。`raw/` 是否每轮都写由配置决定。
+- 轮询完成后组 `RawFrame`；变化检测后再写入 `collect.jsonl`（否则周期快照会撑爆文件）。`raw/` 是否每轮都写由配置决定。
 - 解码规则放点表/配置，不写死在管道里。
 - 若以后同一台设备两种协议都能读，Catalog 主键仍对齐到同一 `DeviceType` + `DeviceId`。
 
@@ -260,8 +264,8 @@ S7 适配器内部：
 
 | 阶段 | 内容 | 验收 |
 |---|---|---|
-| 一期 | Worker + MQTT Source + 规范化 + JSONL | Broker 上 7 类设备状态、任务链、扫码、心跳均可在文件中按 `DeviceId` 检索 |
-| 二期 | S7 Source + 点表解码 + 变化检测 | 同一 `events/` 目录出现 `Protocol=S7` 的记录，回放工具无需分叉 |
+| 一期 | Worker + MQTT Source + 规范化 + 按日 `collect.jsonl` | Broker 上已订 Topic 均可按 `dataType`/`name` + `timestamp` 回放，并用 `linkId` 划分连接会话 |
+| 二期 | S7 Source + 点表解码 + 变化检测 | 同一 `collect.jsonl` 出现 S7 的信封，回放工具无需分叉 |
 | 可选三期 | 数据库 Sink / 对接现有可视化回放 | 文件仍是权威原始层，库是查询层 |
 
 ---

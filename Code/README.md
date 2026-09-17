@@ -1,3 +1,5 @@
+完整操作说明（给只拿到编译文件夹的用户）：[`Doc/使用手册.md`](../Doc/使用手册.md)。重新编译后，该说明会复制为 `bin\Debug\net6.0\使用说明.md`，可随整个输出目录一起拷走。
+
 # 龙华数据采集程序
 
 C# Worker。一期订阅华章 SLS600 MQTT，把原包和规范化记录写成 JSONL。二期 S7 只在配置里预留，代码尚未采集。
@@ -62,32 +64,32 @@ S7 源：`Enabled` 保持 `false`。打开只会打警告，不会读 PLC。点�
 
 ### catalog.json
 
-把协议里的 `modelName` 映射成 `DeviceType`（即 `events/` 下的文件名），把 suffix 映射成 `EventKind`。任务类 suffix 的 `File` 为 `task`，会写到 `events/task.jsonl`。
+把协议里的 `modelName` 映射成 `DeviceType`，把 suffix 映射成 `EventKind`。任务类 suffix 的 `File` 仅作内部分类，落盘不再按设备拆文件。
 
 改现场设备编码或补 Topic 时，优先改这个文件，不必改代码。
 
 ## 运行
 
-需要 **.NET 6 SDK 6.0.2xx**（不要用 6.0.4xx / 8.x 在 VS 2019 里打开）。仓库已用 `global.json` 钉在 `6.0.203`，且只允许同 band 的 patch 滚动。
+需要 **.NET 6 SDK**。`global.json` 已对准本机常见版本 `6.0.425`。
 
-Visual Studio 2019（MSBuild 16.11）无法加载较新 SDK。请在那台电脑安装：
+在 `Code` 目录执行：
 
-- [.NET 6.0.203 SDK](https://dotnet.microsoft.com/download/dotnet/6.0)（6.0.1xx / 6.0.2xx 均可）
-- 或改用 Visual Studio 2022 / `dotnet` 命令行
-
-```bash
-cd Code
+```bat
 dotnet --version
-dotnet run --project src/Longhua.Collector/Longhua.Collector.csproj
+dotnet run --project src\Longhua.Collector\Longhua.Collector.csproj
 ```
 
-`dotnet --version` 应显示 `6.0.2xx`。若仍是 `6.0.4xx`，说明没读到 `global.json`，或尚未安装 6.0.2xx。
+`dotnet --version` 应显示 `6.0.425`（或同 band 的更高补丁）。用命令行即可编译运行；Visual Studio 2019 仍可能无法打开项目，请用 VS 2022 或继续用 `dotnet`。
 
-发布：
+发给 Windows 现场请用（会生成真正的 Windows exe）：
 
-```bash
-dotnet publish src/Longhua.Collector/Longhua.Collector.csproj -c Release -o ./publish
+```bat
+dotnet publish src\Longhua.Collector\Longhua.Collector.csproj -c Release -r win-x64 --self-contained false -o .\publish-win
 ```
+
+拷贝整个 `publish-win` 文件夹。不要把 Linux 编译的 `bin\Debug\net6.0` 直接给 Windows 用户；那边的 `Longhua.Collector.exe` 无法运行。
+
+临时补救（用户电脑已装 .NET 6）：在程序目录执行 `dotnet Longhua.Collector.dll`。
 
 发布目录会带上 `config/`。可用 `LONGHUA_CONFIG_DIR` 指向另一份配置。
 
@@ -97,16 +99,16 @@ Windows 服务：发布后用 `sc.exe create` 指向 `Longhua.Collector.exe`，�
 
 ```
 data/{yyyy-MM-dd}/
-  raw/mqtt-sls600.jsonl
-  events/rgv.jsonl
-  events/task.jsonl
-  events/warehouse.jsonl
-  dead-letter/parse-error.jsonl
+  collect.jsonl
 ```
 
-- `raw/`：原包（Topic、QoS、Retain、JSON 正文）
-- `events/`：统一 `TelemetryRecord`
-- `dead-letter/`：非 JSON、缺 timestamp、未知 Topic
+每一行是回放信封：`linkId`（本次 MQTT 连接 ID，重启后会变）+ `dataType` + `name` + `timestamp` + `data`。
+
+```json
+{"linkId":"3f2a9c1b8e0d47a1b4c55e6f708192a3","dataType":"Rgv","name":"Rgv1","timestamp":"2017-04-15T11:40:03.12Z","data":{"warehouseNo":"1","carNo":1,"status":"1"}}
+```
+
+`raw/`、`dead-letter/` 默认关闭，可在 `FileSink` 打开。
 
 ## 测试
 
