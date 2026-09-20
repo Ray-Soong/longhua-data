@@ -1,8 +1,15 @@
 # 龙华立库数据采集 — 使用说明
 
-你拿到的是已经编译好的程序文件夹（例如 `net6.0`）。**请整个文件夹一起拷贝**，不要只拷里面的 `.exe`。
+你拿到的是已经编译好的程序文件夹（例如 `net6.0` 或 `publish-win`）。**请整个文件夹一起拷贝**，不要只拷里面的 `.exe`。
 
-本程序只从立库 MQTT 收数据并写成文件，**不会**向设备下发任务。
+本程序**只读**采集：旁听立库 MQTT，并可选轮询库外 PLC。**不会**向设备下发任务。
+
+支持两种用法：
+
+| 模式 | 做什么 |
+|---|---|
+| **collection**（默认） | 同时采 MQTT + PLC，写成**两个文件** |
+| **phase** | 不连现场，解析已有的 PLC dump（如 `test2.txt`） |
 
 ---
 
@@ -10,225 +17,246 @@
 
 ```
 （本程序文件夹）
-  Longhua.Collector.exe     ← 双击启动
+  Longhua.Collector.exe     ← 启动采集（或用 dotnet 跑 dll）
   config\
-    appsettings.json        ← 改 Broker 地址（必做）
-    catalog.json            ← 一般不用改
+    appsettings.json        ← Broker / PLC IP / 文件名（必看）
+    catalog.json            ← MQTT 型号映射（一般不用改）
+    plc-conveyor.json       ← PLC 工位点表（1001–1038）
     appsettings.Local.json.example
   使用说明.md               ← 本说明
-  data\                     ← 运行后自动出现，采集结果在这里
+  data\                     ← 运行后自动出现
 ```
 
-其它 `.dll`、`.json`、`.pdb` 都是程序运行需要的，不要删。
+其它 `.dll`、`.json`、`.pdb` 都是运行需要的，不要删。
 
 ---
 
 ## 2. 用户电脑需要什么
 
-- Windows 10 / 11
-- 已安装 **.NET 6 运行时**（Desktop Runtime 或 Runtime 均可）  
-  没有的话打开：https://dotnet.microsoft.com/zh-cn/download/dotnet/6.0  
-  下载 **.NET Desktop Runtime 6.0**（x64）并安装。  
-  **不必**安装 Visual Studio，也**不必**安装 SDK。
-- 电脑能访问立库 MQTT 服务器（默认端口 **1883**）
+- Windows 10 / 11（或已装 .NET 6 的其它环境）
+- **.NET 6 运行时**（Desktop Runtime 或 Runtime）  
+  https://dotnet.microsoft.com/zh-cn/download/dotnet/6.0  
+  选 **.NET Desktop Runtime 6.0**（x64）
+- 能访问立库 MQTT（默认 **1883**）
+- 若启用 PLC 采集：能访问 PLC（默认 **102**，如 `172.168.0.9`）
 
-若双击 exe 窗口闪一下就关：多半是没装运行时。按住 `Shift` 右键本文件夹空白处 →「在此处打开 PowerShell 窗口」，输入：
+双击 exe 窗口一闪就关：多半没装运行时。在本文件夹打开 PowerShell：
 
 ```
 .\Longhua.Collector.exe
 ```
 
-看红色报错再处理。
-
----
-
-## 3. 第一次使用（必做）
-
-### 第 1 步：放到固定位置
-
-把整个文件夹拷到用户电脑，例如：
-
-```
-D:\龙华采集\
-```
-
-以后不要来回挪路径。采集数据会写在这个文件夹里的 `data\`。
-
-### 第 2 步：填写 MQTT 地址
-
-用记事本打开：
-
-```
-本文件夹\config\appsettings.json
-```
-
-找到下面这一段，改成现场实际值：
-
-```json
-"Mqtt": {
-  "Host": "127.0.0.1",
-  "Port": 1883,
-  "UseTls": false,
-  "ClientId": "longhua-collector",
-  "Username": "",
-  "Password": "",
-```
-
-| 要改的项 | 说明 |
-|---|---|
-| `Host` | 立库 MQTT 服务器 IP，**不要用 127.0.0.1**（那是本机测试） |
-| `Port` | 一般是 `1883` |
-| `UseTls` | 现场要求加密再改 `true`，否则保持 `false` |
-| `ClientId` | 每台电脑必须不同，例如 `longhua-collector-1`、`longhua-collector-2` |
-| `Username` / `Password` | 服务器有账号就填；没有则保持 `""` |
-
-改完后**保存**，编码保持 UTF-8。不要把文件改成「一个大 JSON 数组」，也不要删逗号、引号。
-
-有密码又不想写在主配置里时：把 `config\appsettings.Local.json.example` 复制一份，改名为 `appsettings.Local.json`，只填 Host / 账号 / 密码。这个文件优先于 `appsettings.json`。
-
-### 第 3 步：启动
-
-双击 **`Longhua.Collector.exe`**。
-
-会弹出黑色命令行窗口。看到类似下面的字就表示起来了：
-
-```
-配置目录 ...\config，数据目录 ...\data
-启动 1 个采集源，数据目录 ...\data
-MQTT 已连接 Source=mqtt-sls600 Broker=（你填的IP）:1883 ClientId=longhua-collector LinkId=（一串字母数字）
-Application started.
-```
-
-`LinkId` 是本次连接标识，和配置里的 `ClientId` 不是一回事；重启或重连后 `LinkId` 会变。
-
-**不要关这个窗口。** 关掉就等于停止采集。可以把它最小化。
-
-停止采集：在窗口里按 `Ctrl+C`，或直接关闭窗口。
-
----
-
-## 4. 数据在哪里
-
-启动成功后，本文件夹下会出现 `data\`。**同一天所有 MQTT 记录写在一个文件里**（一行一条 JSON），方便以后整文件导入数据库：
-
-```
-data\
-  2026-09-16\
-    collect.jsonl             ← 当天全部采集记录
-```
-
-用记事本可以打开，不要用 Word 保存。每一行结构固定为 **连接 ID + 数据类型 + 名字 + 时间戳 + 数据内容**：
-
-```json
-{"linkId":"3f2a9c1b8e0d47a1b4c55e6f708192a3","dataType":"Rgv","name":"Rgv1","timestamp":"2017-04-15T11:40:03.12Z","data":{"warehouseNo":"1","carNo":1,"status":"1"}}
-```
-
-- `linkId`：本次程序连上 MQTT 后生成的连接标识，**重启或重连后会变**
-- `dataType`：数据类型（`TaskAssign`、`TaskState`、`Rgv`、`FloorState` 等）
-- `name`：这一路的名字（`TaskAssign`、`Rgv1`、`Rgv2`、`Floor1State` 等）
-- `timestamp`：报文里的时间，回放按它排序
-- `data`：MQTT 原文 JSON
-
-小车、任务、库状态靠 `dataType` + `name` 区分，不拆文件。`linkId` 用来判断是不是同一次连接采到的数据。
-
-默认保留 **30 天**，更早的日期文件夹会被自动删掉。要改保留天数，在 `config\appsettings.json` 里改 `KeepDays`（例如 `90`）。改成 `0` 表示不自动删。
-
-以后若改成写数据库，仍是同一套记录结构，只换存储。
-
----
-
-## 5. 怎样判断在正常采集
-
-1. 黑窗口还在，且出现过 `MQTT 已连接`。
-2. `data\当天日期\collect.jsonl` 文件大小在增加。
-3. 大约每 30 秒会打一行 `采集统计`，其中 `Connected=True`，`Received` 数字在变大。
-
----
-
-## 6. 常见问题
-
-**安装 .NET 后要不要重启电脑？**  
-一般**不用重启**。关掉所有已经打开的命令行窗口，再重新双击 exe。若刚装完立刻运行仍报错，可以重启一次排除缓存，但不是必须。
-
-**提示「不支持的程序」/「无法在你的电脑上运行」**  
-这通常不是「没重启」，而是运行时装错或点错了文件。按顺序检查：
-
-1. 启动的必须是 **`Longhua.Collector.exe`**，不要双击 `.dll`。
-2. 必须安装 **.NET 6 Desktop Runtime（x64）**，和 Windows 64 位匹配。  
-   不要只装 x86（32 位），也不要只装 .NET 8 / 9 却没有 6.0。  
-   下载页：https://dotnet.microsoft.com/zh-cn/download/dotnet/6.0  
-   选 **Run desktop apps** → **Download x64**。
-3. 装完后**新开** PowerShell，执行：
-
-```
-dotnet --list-runtimes
-```
-
-列表里要有 `Microsoft.NETCore.App 6.0.x` 和 `Microsoft.WindowsDesktop.App 6.0.x`。没有就说明装错包或没装成功。
-
-4. 在程序文件夹里运行（不要只拷走 exe）：
-
-```
-cd （程序文件夹完整路径）
-.\Longhua.Collector.exe
-```
-
-把窗口里的完整英文/中文报错留下来。
-
-**提示「不是此操作系统平台的有效应用程序」**  
-`.exe` 不是 Windows 程序（常见原因：文件夹是在 Linux 上编译后拷过来的）。运行时已经装好时，**不要用 exe**，在同一目录执行：
+或：
 
 ```
 dotnet Longhua.Collector.dll
 ```
 
-这和双击 exe 是同一个程序。发给别人的包应在 Windows 上用下面命令重新发布后再拷贝：
+---
+
+## 3. 第一次使用 — collection（采集）
+
+### 第 1 步：放到固定位置
+
+例如 `D:\龙华采集\`。数据写在本文件夹下的 `data\`。
+
+### 第 2 步：改配置
+
+打开 `config\appsettings.json`。
+
+**MQTT（必改 Host）：**
+
+```json
+"Mqtt": {
+  "Host": "现场BrokerIP",
+  "Port": 1883,
+  "ClientId": "longhua-collector-1",
+  ...
+}
+```
+
+| 项 | 说明 |
+|---|---|
+| `Host` | 立库 MQTT IP，不要用 `127.0.0.1`（除非本机测试） |
+| `ClientId` | **每台电脑不同** |
+| `Username` / `Password` | 有则填，无则 `""` |
+
+**PLC（按现场改）：**
+
+```json
+"S7": {
+  "Ip": "172.168.0.9",
+  "Port": 102,
+  "Rack": 0,
+  "Slot": 1,
+  "Polls": [
+    {
+      "Db": 3,
+      "Start": 0,
+      "Length": 494,
+      "IntervalMs": 200,
+      "PointTable": "plc-conveyor.json"
+    }
+  ]
+}
+```
+
+| 项 | 说明 |
+|---|---|
+| `Enabled` | `true` 采 PLC；暂时只采 MQTT 可改 `false` |
+| `Length` | 模型关注 **494**（工位 1001–1038）；若要对齐旧 dump 可读 **514** |
+| `PlcFileName` / `FileName` | 默认 PLC 文件名 `plc`，MQTT 文件名 `mqtt` |
+
+密码不想写进主配置：复制 `appsettings.Local.json.example` → `appsettings.Local.json`，只填覆盖项。
+
+### 第 3 步：启动
+
+双击 exe，或：
+
+```
+.\Longhua.Collector.exe collection
+```
+
+（省略参数时默认也是 collection。）
+
+看到类似输出即正常：
+
+```
+模式 collection，配置目录 ...\config，数据目录 ...\data，MQTT文件=mqtt PLC文件=plc
+MQTT 已连接 ...
+S7 采集已启动 ...
+```
+
+**不要关窗口。** 停止：`Ctrl+C` 或关窗口。
+
+PLC 连不上时会打警告并重试，**MQTT 仍可继续采**。
+
+---
+
+## 4. 数据在哪里（collection）
+
+```
+data\
+  2026-09-16\
+    mqtt.jsonl      ← 当天 MQTT（一行一条 JSON）
+    plc.txt         ← 当天 PLC dump（[[longhua]] 块）
+```
+
+### mqtt.jsonl
+
+```json
+{"linkId":"...","dataType":"Rgv","name":"Rgv1","timestamp":"...","data":{...}}
+```
+
+- `linkId`：本次 MQTT 连接 ID，重连会变  
+- `dataType` / `name`：类型与实例  
+- `timestamp`：报文时间  
+- `data`：原文 JSON  
+
+### plc.txt
+
+与现场 `test2.txt` 同类：
+
+```
+[[longhua]]
+2026/9/18 16:36:47
+（帧id）
+DB3.0
+19 0 0 0 ...（空格分隔字节）
+```
+
+默认保留 **30 天**（`KeepDays`）。
+
+---
+
+## 5. phase — 解析 PLC dump
+
+不连 Broker / PLC，只把已有 dump 按点表解开。
+
+```
+.\Longhua.Collector.exe phase ^
+  --input=D:\data\test2.txt ^
+  --block-length=514 ^
+  --point-table=config\plc-conveyor.json ^
+  --output=D:\data\test2.phased.jsonl
+```
+
+| 参数 | 含义 |
+|---|---|
+| `--input` / `-i` | dump 文件路径 |
+| `--block-length` / `-b` | 每块原始字节数（`test2.txt` 用 **514**） |
+| `--point-table` / `-p` | 点表，默认 `config/plc-conveyor.json` |
+| `--output` / `-o` | 输出 JSONL；省略则在 input 旁生成 `*.phased.jsonl` |
+
+点表只解 **enabled** 工位（默认 1001–1038）。输出每一行一个工位字段对象，含 `stationId`、`dataType`、`rawHex`、`data` 等。
+
+也可用配置 `Collector:Phase:*`，再执行 `phase`。
+
+---
+
+## 6. 怎样判断在正常采集
+
+1. 窗口还在，出现过 `MQTT 已连接`。  
+2. `data\当天\mqtt.jsonl` 在变大。  
+3. 若启用了 S7：`plc.txt` 在变大，或日志里 S7 Received 在增加。  
+4. 约每 30 秒有 `采集统计`，`Connected=True`，`Received` 增大。
+
+---
+
+## 7. 常见问题
+
+**没装 .NET / 窗口一闪就没**  
+见第 2 节；用 PowerShell 跑看报错。
+
+**「不是有效应用程序」**  
+多半是 Linux 编译的 exe。应在 Windows 上：
 
 ```
 dotnet publish src\Longhua.Collector\Longhua.Collector.csproj -c Release -r win-x64 --self-contained false -o .\publish-win
 ```
 
-拷给用户的是 `publish-win` 整个文件夹，不要拷 Linux 的 `bin\Debug\net6.0`。
+或直接：`dotnet Longhua.Collector.dll`。
 
-**窗口一闪就没了**  
-没装 .NET 6 运行时，见第 2 节。或从 PowerShell 运行 exe 看报错。
+**MQTT 连接失败**  
+Host/Port、网络、防火墙 1883；先 ping Broker。
 
-**一直 `MQTT 连接失败` / Connection refused**  
-`Host`、`Port` 填错；电脑和立库不在同一网络；防火墙拦了 1883。先用现场网络确认能 ping 通 Broker IP。
+**mqtt.jsonl 不增长**  
+Topic 与现场不一致；或只有 Received 增加、Events 不增加 → 解析失败（缺 timestamp 等）。
 
-**已连接，但 `collect.jsonl` 不增长**  
-默认只写这一个文件，不会出现 `raw\` 目录。可能原因：Broker 暂时没有报文；或 `config\appsettings.json` 里 19 条 `Subscriptions` 的 Topic 和现场不一致。连上时若现场有保留状态，一般会先收到一批。窗口里 `采集统计` 的 `Received` 在增加、`Events` 不增加，说明收到了但解析失败（缺 `timestamp`、不是 JSON、Topic 对不上）。
+**plc.txt 不增长**  
+S7 `Enabled` 是否为 true；IP/Rack/Slot/DB 是否对；防火墙 102；日志里是否有「S7 轮询失败」。
 
-**两台电脑互相掉线**  
-`ClientId` 重复了，改成每台不一样。
+**两台电脑互踢**  
+`ClientId` 重复。
 
-**提示找不到 config/appsettings.json**  
-没有拷完整文件夹，或把 exe 单独拿出来运行了。必须在「整个程序文件夹」里启动。
-
-**解析失败看不到文件**  
-默认不写 `dead-letter\`。失败只打日志，`采集统计` 里 `DeadLetter` 会增加。需要落盘时，在 `FileSink` 把 `WriteDeadLetter` 改成 `true` 后重启。
+**phase 报块长度不符**  
+`--block-length` 要与 dump 每帧字节数一致（`test2` 为 514）。
 
 **改了配置没生效**  
-先停掉程序再改 JSON，保存后再启动。
+先停程序再改，保存后重启。
+
+**找不到 config**  
+必须在完整程序文件夹里启动，或设置环境变量 `LONGHUA_CONFIG_DIR`。
 
 ---
 
-## 7. 不要做的事
+## 8. 不要做的事
 
-- 不要只拷贝 `Longhua.Collector.exe` 一个文件  
-- 不要删除同目录下的 dll  
-- 不要关闭正在采集的黑窗口  
-- 不要两台机器用同一个 `ClientId`  
+- 不要只拷贝一个 exe  
+- 不要删同目录 dll / config  
+- 不要关正在采集的窗口  
+- 不要两台机器同一 `ClientId`  
 - 不要用本程序给立库下发任务  
 
 ---
 
-## 8. 日常备忘
+## 9. 日常备忘
 
 | 目的 | 做法 |
 |---|---|
-| 开始采集 | 双击 `Longhua.Collector.exe`，窗口不要关 |
-| 停止采集 | 窗口里 `Ctrl+C`，或关窗口 |
-| 改服务器地址 | 改 `config\appsettings.json` 里的 `Host`，重启程序 |
-| 看数据 | 打开本文件夹下 `data\当天日期\` |
-| 换电脑跑 | 拷贝**整个文件夹**，改一个新的 `ClientId` |
+| 开始采集 | `Longhua.Collector.exe` 或 `… collection` |
+| 停止采集 | `Ctrl+C` |
+| 改 MQTT/PLC 地址 | 改 `config\appsettings.json`，重启 |
+| 看数据 | `data\当天日期\mqtt.jsonl` 与 `plc.txt` |
+| 解析旧 PLC 文件 | `… phase --input=... --block-length=514` |
+| 换电脑 | 拷整个文件夹，换新 `ClientId` |
