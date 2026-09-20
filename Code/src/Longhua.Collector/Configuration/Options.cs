@@ -4,6 +4,9 @@ public sealed class CollectorOptions
 {
     public const string SectionName = "Collector";
 
+    /// <summary>collection | phase。CLI 第一参数可覆盖。</summary>
+    public string Mode { get; set; } = "collection";
+
     /// <summary>相对路径相对配置目录的上一级（Code/ 或发布目录）。</summary>
     public string DataRoot { get; set; } = "data";
 
@@ -20,6 +23,8 @@ public sealed class CollectorOptions
     public List<SourceOptions> Sources { get; set; } = new();
 
     public FileSinkOptions FileSink { get; set; } = new();
+
+    public PhaseOptions Phase { get; set; } = new();
 }
 
 public sealed class FileSinkOptions
@@ -31,14 +36,29 @@ public sealed class FileSinkOptions
 
     public int KeepDays { get; set; } = 30;
 
-    /// <summary>当天采集主文件名（不含扩展名）。所有规范化记录写入这一个文件，便于以后整文件导入数据库。</summary>
-    public string FileName { get; set; } = "collect";
+    /// <summary>当天 MQTT 采集文件名（不含扩展名）。</summary>
+    public string FileName { get; set; } = "mqtt";
+
+    /// <summary>当天 PLC dump 文件名（不含扩展名），扩展名固定 .txt。</summary>
+    public string PlcFileName { get; set; } = "plc";
 
     /// <summary>是否额外写 raw/ 原包。默认关闭，先只保留一份统一记录。</summary>
     public bool WriteRaw { get; set; }
 
     /// <summary>是否把解析失败另写 dead-letter。默认关闭，避免拆成多文件。</summary>
     public bool WriteDeadLetter { get; set; }
+}
+
+public sealed class PhaseOptions
+{
+    public string Input { get; set; } = "";
+
+    public string PointTable { get; set; } = "plc-conveyor.json";
+
+    public string Output { get; set; } = "";
+
+    /// <summary>dump 中每块原始字节数；0 表示用点表 readLength/length。</summary>
+    public int BlockLength { get; set; }
 }
 
 public sealed class SourceOptions

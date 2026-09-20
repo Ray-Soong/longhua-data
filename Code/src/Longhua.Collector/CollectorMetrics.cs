@@ -23,6 +23,8 @@ public sealed class CollectorMetrics
 
     public void MarkMqttDisconnected(string sourceId) => Get(sourceId).Connected = false;
 
+    public void SetConnected(string sourceId, bool connected) => Get(sourceId).Connected = connected;
+
     public long EventCount => _events.Value;
 
     public long DeadLetterCount => _deadLetters.Value;

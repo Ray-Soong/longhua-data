@@ -3,6 +3,7 @@ using Longhua.Collector.Abstractions;
 using Longhua.Collector.Mqtt;
 using Longhua.Collector.S7;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace Longhua.Collector.Configuration;
 
@@ -11,12 +12,18 @@ public sealed class DataSourceFactory
     private readonly ChannelWriter<RawFrame> _writer;
     private readonly CollectorMetrics _metrics;
     private readonly ILoggerFactory _loggerFactory;
+    private readonly CollectorOptions _options;
 
-    public DataSourceFactory(ChannelWriter<RawFrame> writer, CollectorMetrics metrics, ILoggerFactory loggerFactory)
+    public DataSourceFactory(
+        ChannelWriter<RawFrame> writer,
+        CollectorMetrics metrics,
+        ILoggerFactory loggerFactory,
+        IOptions<CollectorOptions> options)
     {
         _writer = writer;
         _metrics = metrics;
         _loggerFactory = loggerFactory;
+        _options = options.Value;
     }
 
     public IDataSource Create(SourceOptions options)
@@ -33,7 +40,13 @@ public sealed class DataSourceFactory
                 _writer,
                 _metrics,
                 _loggerFactory.CreateLogger<MqttDataSource>()),
-            "S7" or "s7" => new S7DataSource(options, _loggerFactory.CreateLogger<S7DataSource>()),
+            "S7" or "s7" => new S7DataSource(
+                options,
+                _metrics,
+                _loggerFactory.CreateLogger<S7DataSource>(),
+                _options.DataRoot,
+                _options.FileSink.PlcFileName,
+                writer: null),
             _ => throw new InvalidOperationException($"未知协议 {options.Protocol}，采集源 {options.Id}。")
         };
     }

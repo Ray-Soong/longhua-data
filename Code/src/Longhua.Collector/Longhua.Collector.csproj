@@ -3,15 +3,17 @@
     <TargetFramework>net6.0</TargetFramework>
     <RootNamespace>Longhua.Collector</RootNamespace>
     <AssemblyName>Longhua.Collector</AssemblyName>
-    <Description>龙华立库数据采集：MQTT 一期，S7 预留</Description>
+    <Description>龙华立库数据采集：MQTT + PLC collection / phase 解析</Description>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.Extensions.Hosting.WindowsServices" Version="6.0.2" />
     <PackageReference Include="MQTTnet" Version="4.3.7.1207" />
+    <PackageReference Include="Sharp7" Version="1.1.84" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\config\appsettings.json" Link="config\appsettings.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="..\..\config\catalog.json" Link="config\catalog.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\..\config\plc-conveyor.json" Link="config\plc-conveyor.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="..\..\config\appsettings.Local.json.example" Link="config\appsettings.Local.json.example" CopyToOutputDirectory="PreserveNewest" />
     <None Include="..\..\..\Doc\UserGuide.md" Link="使用说明.md" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
