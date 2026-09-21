@@ -94,7 +94,7 @@ dotnet Longhua.Collector.dll
       "Db": 3,
       "Start": 0,
       "Length": 494,
-      "IntervalMs": 200,
+      "IntervalMs": 50,
       "PointTable": "plc-conveyor.json"
     }
   ]

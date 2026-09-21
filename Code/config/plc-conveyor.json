@@ -15,7 +15,7 @@
     "length": 494,
     "readLength": 494,
     "byteOrder": "BigEndian",
-    "intervalMs": 200,
+    "intervalMs": 50,
     "writeRawEveryPoll": true
   },
   "layout": {
@@ -33,91 +33,509 @@
       "meaning": "移栽工位",
       "sizeBytes": 16,
       "fields": [
-        { "name": "iAuto", "type": "Bool", "offset": "0.0", "comment": "手自动" },
-        { "name": "iStop", "type": "Bool", "offset": "0.1", "comment": "急停状态" },
-        { "name": "iReset", "type": "Bool", "offset": "0.2", "comment": "复位" },
-        { "name": "iSensor", "type": "Bool", "offset": "0.3", "comment": "光电" },
-        { "name": "iHSensor", "type": "Bool", "offset": "0.4", "comment": "移栽上光电" },
-        { "name": "iLSensor", "type": "Bool", "offset": "0.5", "comment": "移栽下光电" },
-        { "name": "iMTransFWD", "type": "Bool", "offset": "0.6", "comment": "移栽正转" },
-        { "name": "iMTransREV", "type": "Bool", "offset": "0.7", "comment": "移栽反转" },
-        { "name": "iMRollerREV", "type": "Bool", "offset": "1.0", "comment": "滚筒反转" },
-        { "name": "iMRollerFWD", "type": "Bool", "offset": "1.1", "comment": "滚筒正转" },
-        { "name": "iMJackUp", "type": "Bool", "offset": "1.2", "comment": "顶升手动上升" },
-        { "name": "iMJackLower", "type": "Bool", "offset": "1.3", "comment": "顶升手动下降" },
-        { "name": "oRollerOccupancy", "type": "Bool", "offset": "1.4", "comment": "占位相关状态" },
-        { "name": "oRollerRun", "type": "Bool", "offset": "1.5", "comment": "运行状态" },
-        { "name": "ioTransControl", "type": "SInt", "offset": "2.0", "comment": "不等于0移栽输出" },
-        { "name": "ioRollerControl", "type": "SInt", "offset": "3.0", "comment": "不等于0滚筒输出" },
-        { "name": "ioJackControl", "type": "SInt", "offset": "4.0", "comment": "不等于0顶升输出" },
-        { "name": "ioModuleErr", "type": "SInt", "offset": "5.0", "comment": "状态报警" },
-        { "name": "iModuleErrHMI", "type": "Bool", "offset": "6.0", "comment": "触摸屏报警" },
-        { "name": "ioThisStep", "type": "USInt", "offset": "7.0", "comment": "当前步序" },
-        { "name": "ioJackStep", "type": "USInt", "offset": "8.0", "comment": "移栽步序" },
-        { "name": "iLowTimeSet", "type": "Int", "offset": "10.0", "comment": "低位运行/延时时间" },
-        { "name": "iUpTimeSet", "type": "Int", "offset": "12.0", "comment": "高位延时时间" },
-        { "name": "iOutTimeSet", "type": "Int", "offset": "14.0", "comment": "脱离延时时间" }
+        {
+          "name": "iAuto",
+          "type": "Bool",
+          "offset": "0.0",
+          "comment": "手自动"
+        },
+        {
+          "name": "iStop",
+          "type": "Bool",
+          "offset": "0.1",
+          "comment": "急停状态"
+        },
+        {
+          "name": "iReset",
+          "type": "Bool",
+          "offset": "0.2",
+          "comment": "复位"
+        },
+        {
+          "name": "iSensor",
+          "type": "Bool",
+          "offset": "0.3",
+          "comment": "光电"
+        },
+        {
+          "name": "iHSensor",
+          "type": "Bool",
+          "offset": "0.4",
+          "comment": "移栽上光电"
+        },
+        {
+          "name": "iLSensor",
+          "type": "Bool",
+          "offset": "0.5",
+          "comment": "移栽下光电"
+        },
+        {
+          "name": "iMTransFWD",
+          "type": "Bool",
+          "offset": "0.6",
+          "comment": "移栽正转"
+        },
+        {
+          "name": "iMTransREV",
+          "type": "Bool",
+          "offset": "0.7",
+          "comment": "移栽反转"
+        },
+        {
+          "name": "iMRollerREV",
+          "type": "Bool",
+          "offset": "1.0",
+          "comment": "滚筒反转"
+        },
+        {
+          "name": "iMRollerFWD",
+          "type": "Bool",
+          "offset": "1.1",
+          "comment": "滚筒正转"
+        },
+        {
+          "name": "iMJackUp",
+          "type": "Bool",
+          "offset": "1.2",
+          "comment": "顶升手动上升"
+        },
+        {
+          "name": "iMJackLower",
+          "type": "Bool",
+          "offset": "1.3",
+          "comment": "顶升手动下降"
+        },
+        {
+          "name": "oRollerOccupancy",
+          "type": "Bool",
+          "offset": "1.4",
+          "comment": "占位相关状态"
+        },
+        {
+          "name": "oRollerRun",
+          "type": "Bool",
+          "offset": "1.5",
+          "comment": "运行状态"
+        },
+        {
+          "name": "ioTransControl",
+          "type": "SInt",
+          "offset": "2.0",
+          "comment": "不等于0移栽输出"
+        },
+        {
+          "name": "ioRollerControl",
+          "type": "SInt",
+          "offset": "3.0",
+          "comment": "不等于0滚筒输出"
+        },
+        {
+          "name": "ioJackControl",
+          "type": "SInt",
+          "offset": "4.0",
+          "comment": "不等于0顶升输出"
+        },
+        {
+          "name": "ioModuleErr",
+          "type": "SInt",
+          "offset": "5.0",
+          "comment": "状态报警"
+        },
+        {
+          "name": "iModuleErrHMI",
+          "type": "Bool",
+          "offset": "6.0",
+          "comment": "触摸屏报警"
+        },
+        {
+          "name": "ioThisStep",
+          "type": "USInt",
+          "offset": "7.0",
+          "comment": "当前步序"
+        },
+        {
+          "name": "ioJackStep",
+          "type": "USInt",
+          "offset": "8.0",
+          "comment": "移栽步序"
+        },
+        {
+          "name": "iLowTimeSet",
+          "type": "Int",
+          "offset": "10.0",
+          "comment": "低位运行/延时时间"
+        },
+        {
+          "name": "iUpTimeSet",
+          "type": "Int",
+          "offset": "12.0",
+          "comment": "高位延时时间"
+        },
+        {
+          "name": "iOutTimeSet",
+          "type": "Int",
+          "offset": "14.0",
+          "comment": "脱离延时时间"
+        }
       ]
     },
     "RollerState": {
       "meaning": "直线滚筒工位",
       "sizeBytes": 10,
       "fields": [
-        { "name": "iAuto", "type": "Bool", "offset": "0.0", "comment": "手自动" },
-        { "name": "iStop", "type": "Bool", "offset": "0.1", "comment": "急停状态" },
-        { "name": "iReset", "type": "Bool", "offset": "0.2", "comment": "复位状态" },
-        { "name": "iSensor", "type": "Bool", "offset": "0.3", "comment": "当前光电" },
-        { "name": "iMRollerREV", "type": "Bool", "offset": "0.4", "comment": "滚筒正转（名与注释以现场核对）" },
-        { "name": "iMRollerFWD", "type": "Bool", "offset": "0.5", "comment": "滚筒反转（名与注释以现场核对）" },
-        { "name": "oRollerOccupancy", "type": "Bool", "offset": "0.6", "comment": "占位状态" },
-        { "name": "oRollerRun", "type": "Bool", "offset": "0.7", "comment": "滚筒运行" },
-        { "name": "ioRollerControl", "type": "SInt", "offset": "1.0", "comment": "运行状态" },
-        { "name": "ioErr", "type": "SInt", "offset": "2.0", "comment": "超时报警" },
-        { "name": "ioErrHMI", "type": "Bool", "offset": "3.0", "comment": "触摸屏报警" },
-        { "name": "ioThisStep", "type": "USInt", "offset": "4.0", "comment": "当前步序" },
-        { "name": "iTimeSet", "type": "Int", "offset": "6.0", "comment": "到位延时" },
-        { "name": "iOutTimeSet", "type": "Int", "offset": "8.0", "comment": "脱离延时" }
+        {
+          "name": "iAuto",
+          "type": "Bool",
+          "offset": "0.0",
+          "comment": "手自动"
+        },
+        {
+          "name": "iStop",
+          "type": "Bool",
+          "offset": "0.1",
+          "comment": "急停状态"
+        },
+        {
+          "name": "iReset",
+          "type": "Bool",
+          "offset": "0.2",
+          "comment": "复位状态"
+        },
+        {
+          "name": "iSensor",
+          "type": "Bool",
+          "offset": "0.3",
+          "comment": "当前光电"
+        },
+        {
+          "name": "iMRollerREV",
+          "type": "Bool",
+          "offset": "0.4",
+          "comment": "滚筒正转（名与注释以现场核对）"
+        },
+        {
+          "name": "iMRollerFWD",
+          "type": "Bool",
+          "offset": "0.5",
+          "comment": "滚筒反转（名与注释以现场核对）"
+        },
+        {
+          "name": "oRollerOccupancy",
+          "type": "Bool",
+          "offset": "0.6",
+          "comment": "占位状态"
+        },
+        {
+          "name": "oRollerRun",
+          "type": "Bool",
+          "offset": "0.7",
+          "comment": "滚筒运行"
+        },
+        {
+          "name": "ioRollerControl",
+          "type": "SInt",
+          "offset": "1.0",
+          "comment": "运行状态"
+        },
+        {
+          "name": "ioErr",
+          "type": "SInt",
+          "offset": "2.0",
+          "comment": "超时报警"
+        },
+        {
+          "name": "ioErrHMI",
+          "type": "Bool",
+          "offset": "3.0",
+          "comment": "触摸屏报警"
+        },
+        {
+          "name": "ioThisStep",
+          "type": "USInt",
+          "offset": "4.0",
+          "comment": "当前步序"
+        },
+        {
+          "name": "iTimeSet",
+          "type": "Int",
+          "offset": "6.0",
+          "comment": "到位延时"
+        },
+        {
+          "name": "iOutTimeSet",
+          "type": "Int",
+          "offset": "8.0",
+          "comment": "脱离延时"
+        }
       ]
     }
   },
   "stations": [
-    { "id": 1001, "type": "ModuleState", "offset": 0, "length": 16, "enabled": true },
-    { "id": 1002, "type": "ModuleState", "offset": 16, "length": 16, "enabled": true },
-    { "id": 1003, "type": "RollerState", "offset": 32, "length": 10, "enabled": true },
-    { "id": 1004, "type": "RollerState", "offset": 42, "length": 10, "enabled": true },
-    { "id": 1005, "type": "RollerState", "offset": 52, "length": 10, "enabled": true },
-    { "id": 1006, "type": "RollerState", "offset": 62, "length": 10, "enabled": true },
-    { "id": 1007, "type": "RollerState", "offset": 72, "length": 10, "enabled": true },
-    { "id": 1008, "type": "RollerState", "offset": 82, "length": 10, "enabled": true },
-    { "id": 1009, "type": "RollerState", "offset": 92, "length": 10, "enabled": true },
-    { "id": 1010, "type": "ModuleState", "offset": 102, "length": 16, "enabled": true },
-    { "id": 1011, "type": "ModuleState", "offset": 118, "length": 16, "enabled": true },
-    { "id": 1012, "type": "RollerState", "offset": 134, "length": 10, "enabled": true },
-    { "id": 1013, "type": "ModuleState", "offset": 144, "length": 16, "enabled": true },
-    { "id": 1014, "type": "RollerState", "offset": 160, "length": 10, "enabled": true },
-    { "id": 1015, "type": "ModuleState", "offset": 170, "length": 16, "enabled": true },
-    { "id": 1016, "type": "ModuleState", "offset": 186, "length": 16, "enabled": true },
-    { "id": 1017, "type": "RollerState", "offset": 202, "length": 10, "enabled": true },
-    { "id": 1018, "type": "ModuleState", "offset": 212, "length": 16, "enabled": true },
-    { "id": 1019, "type": "ModuleState", "offset": 228, "length": 16, "enabled": true },
-    { "id": 1020, "type": "RollerState", "offset": 244, "length": 10, "enabled": true },
-    { "id": 1021, "type": "ModuleState", "offset": 254, "length": 16, "enabled": true },
-    { "id": 1022, "type": "ModuleState", "offset": 270, "length": 16, "enabled": true },
-    { "id": 1023, "type": "RollerState", "offset": 286, "length": 10, "enabled": true },
-    { "id": 1024, "type": "ModuleState", "offset": 296, "length": 16, "enabled": true },
-    { "id": 1025, "type": "RollerState", "offset": 312, "length": 10, "enabled": true },
-    { "id": 1026, "type": "RollerState", "offset": 322, "length": 10, "enabled": true },
-    { "id": 1027, "type": "ModuleState", "offset": 332, "length": 16, "enabled": true },
-    { "id": 1028, "type": "ModuleState", "offset": 348, "length": 16, "enabled": true },
-    { "id": 1029, "type": "RollerState", "offset": 364, "length": 10, "enabled": true },
-    { "id": 1030, "type": "RollerState", "offset": 374, "length": 10, "enabled": true },
-    { "id": 1031, "type": "ModuleState", "offset": 384, "length": 16, "enabled": true },
-    { "id": 1032, "type": "ModuleState", "offset": 400, "length": 16, "enabled": true },
-    { "id": 1033, "type": "RollerState", "offset": 416, "length": 10, "enabled": true },
-    { "id": 1034, "type": "RollerState", "offset": 426, "length": 10, "enabled": true },
-    { "id": 1035, "type": "ModuleState", "offset": 436, "length": 16, "enabled": true },
-    { "id": 1036, "type": "ModuleState", "offset": 452, "length": 16, "enabled": true },
-    { "id": 1037, "type": "RollerState", "offset": 468, "length": 10, "enabled": true },
-    { "id": 1038, "type": "ModuleState", "offset": 478, "length": 16, "enabled": true }
+    {
+      "id": 1001,
+      "type": "ModuleState",
+      "offset": 0,
+      "length": 16,
+      "enabled": true
+    },
+    {
+      "id": 1002,
+      "type": "ModuleState",
+      "offset": 16,
+      "length": 16,
+      "enabled": true
+    },
+    {
+      "id": 1003,
+      "type": "RollerState",
+      "offset": 32,
+      "length": 10,
+      "enabled": true
+    },
+    {
+      "id": 1004,
+      "type": "RollerState",
+      "offset": 42,
+      "length": 10,
+      "enabled": true
+    },
+    {
+      "id": 1005,
+      "type": "RollerState",
+      "offset": 52,
+      "length": 10,
+      "enabled": true
+    },
+    {
+      "id": 1006,
+      "type": "RollerState",
+      "offset": 62,
+      "length": 10,
+      "enabled": true
+    },
+    {
+      "id": 1007,
+      "type": "RollerState",
+      "offset": 72,
+      "length": 10,
+      "enabled": true
+    },
+    {
+      "id": 1008,
+      "type": "RollerState",
+      "offset": 82,
+      "length": 10,
+      "enabled": true
+    },
+    {
+      "id": 1009,
+      "type": "RollerState",
+      "offset": 92,
+      "length": 10,
+      "enabled": true
+    },
+    {
+      "id": 1010,
+      "type": "ModuleState",
+      "offset": 102,
+      "length": 16,
+      "enabled": true
+    },
+    {
+      "id": 1011,
+      "type": "ModuleState",
+      "offset": 118,
+      "length": 16,
+      "enabled": true
+    },
+    {
+      "id": 1012,
+      "type": "RollerState",
+      "offset": 134,
+      "length": 10,
+      "enabled": true
+    },
+    {
+      "id": 1013,
+      "type": "ModuleState",
+      "offset": 144,
+      "length": 16,
+      "enabled": true
+    },
+    {
+      "id": 1014,
+      "type": "RollerState",
+      "offset": 160,
+      "length": 10,
+      "enabled": true
+    },
+    {
+      "id": 1015,
+      "type": "ModuleState",
+      "offset": 170,
+      "length": 16,
+      "enabled": true
+    },
+    {
+      "id": 1016,
+      "type": "ModuleState",
+      "offset": 186,
+      "length": 16,
+      "enabled": true
+    },
+    {
+      "id": 1017,
+      "type": "RollerState",
+      "offset": 202,
+      "length": 10,
+      "enabled": true
+    },
+    {
+      "id": 1018,
+      "type": "ModuleState",
+      "offset": 212,
+      "length": 16,
+      "enabled": true
+    },
+    {
+      "id": 1019,
+      "type": "ModuleState",
+      "offset": 228,
+      "length": 16,
+      "enabled": true
+    },
+    {
+      "id": 1020,
+      "type": "RollerState",
+      "offset": 244,
+      "length": 10,
+      "enabled": true
+    },
+    {
+      "id": 1021,
+      "type": "ModuleState",
+      "offset": 254,
+      "length": 16,
+      "enabled": true
+    },
+    {
+      "id": 1022,
+      "type": "ModuleState",
+      "offset": 270,
+      "length": 16,
+      "enabled": true
+    },
+    {
+      "id": 1023,
+      "type": "RollerState",
+      "offset": 286,
+      "length": 10,
+      "enabled": true
+    },
+    {
+      "id": 1024,
+      "type": "ModuleState",
+      "offset": 296,
+      "length": 16,
+      "enabled": true
+    },
+    {
+      "id": 1025,
+      "type": "RollerState",
+      "offset": 312,
+      "length": 10,
+      "enabled": true
+    },
+    {
+      "id": 1026,
+      "type": "RollerState",
+      "offset": 322,
+      "length": 10,
+      "enabled": true
+    },
+    {
+      "id": 1027,
+      "type": "ModuleState",
+      "offset": 332,
+      "length": 16,
+      "enabled": true
+    },
+    {
+      "id": 1028,
+      "type": "ModuleState",
+      "offset": 348,
+      "length": 16,
+      "enabled": true
+    },
+    {
+      "id": 1029,
+      "type": "RollerState",
+      "offset": 364,
+      "length": 10,
+      "enabled": true
+    },
+    {
+      "id": 1030,
+      "type": "RollerState",
+      "offset": 374,
+      "length": 10,
+      "enabled": true
+    },
+    {
+      "id": 1031,
+      "type": "ModuleState",
+      "offset": 384,
+      "length": 16,
+      "enabled": true
+    },
+    {
+      "id": 1032,
+      "type": "ModuleState",
+      "offset": 400,
+      "length": 16,
+      "enabled": true
+    },
+    {
+      "id": 1033,
+      "type": "RollerState",
+      "offset": 416,
+      "length": 10,
+      "enabled": true
+    },
+    {
+      "id": 1034,
+      "type": "RollerState",
+      "offset": 426,
+      "length": 10,
+      "enabled": true
+    },
+    {
+      "id": 1035,
+      "type": "ModuleState",
+      "offset": 436,
+      "length": 16,
+      "enabled": true
+    },
+    {
+      "id": 1036,
+      "type": "ModuleState",
+      "offset": 452,
+      "length": 16,
+      "enabled": true
+    },
+    {
+      "id": 1037,
+      "type": "RollerState",
+      "offset": 468,
+      "length": 10,
+      "enabled": true
+    },
+    {
+      "id": 1038,
+      "type": "ModuleState",
+      "offset": 478,
+      "length": 16,
+      "enabled": true
+    }
   ]
 }
