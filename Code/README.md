@@ -59,16 +59,15 @@ S7：
 | 键 | 含义 |
 |---|---|
 | `S7:Ip` / `Rack` / `Slot` | PLC 连接 |
-| `Polls[].Db` / `Start` / `Length` | 读 DB3；模型用 **494**，对齐旧 dump 可用 **514** |
+| `Polls[].Db` / `Start` / `Length` | 读 DB3；**494**（工位 1001–1038） |
 | `Polls[].IntervalMs` | 轮询间隔 |
 | `Polls[].PointTable` | 点表文件名（phase / 文档用；collection dump 按 Length 整块写） |
 
 ### plc-conveyor.json
 
-- `plc.length` = 494（关注区）  
-- `plc.readLength` = 514（可选整帧）  
+- `plc.length` / `plc.readLength` = **494**  
 - `types.ModuleState` / `RollerState`：字段偏移  
-- `stations[]`：`id` / `type` / `offset` / `length` / `enabled`
+- `stations[]`：38 个工位 **1001–1038**
 
 ## 运行
 
@@ -84,11 +83,12 @@ dotnet run --project src\Longhua.Collector\Longhua.Collector.csproj -- collectio
 rem 解析 dump
 dotnet run --project src\Longhua.Collector\Longhua.Collector.csproj -- phase ^
   --input=..\..\collected-datas\test2.txt ^
-  --block-length=514 ^
+  --block-length=494 ^
   --point-table=config\plc-conveyor.json ^
   --output=.\data\test2.phased.jsonl
 ```
 
+（历史 `test2.txt` 若每帧 514 字节，把 `--block-length` 改为 `514`。）
 发布给 Windows 现场：
 
 ```bat

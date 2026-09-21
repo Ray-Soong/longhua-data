@@ -104,7 +104,7 @@ dotnet Longhua.Collector.dll
 | 项 | 说明 |
 |---|---|
 | `Enabled` | `true` 采 PLC；暂时只采 MQTT 可改 `false` |
-| `Length` | 模型关注 **494**（工位 1001–1038）；若要对齐旧 dump 可读 **514** |
+| `Length` | **494**（工位 1001–1038） |
 | `PlcFileName` / `FileName` | 默认 PLC 文件名 `plc`，MQTT 文件名 `mqtt` |
 
 密码不想写进主配置：复制 `appsettings.Local.json.example` → `appsettings.Local.json`，只填覆盖项。
@@ -185,13 +185,15 @@ cd D:\workspace\SHLH\longhua-data\Code\src\Longhua.Collector\bin\Debug\net6.0
 ### 5.2 命令示例（PowerShell 单行）
 
 ```powershell
-.\Longhua.Collector.exe phase --input=D:\workspace\SHLH\longhua-data\Code\src\Longhua.Collector\bin\Debug\test2.txt --block-length=514 --point-table=config\plc-conveyor.json --output=D:\workspace\SHLH\longhua-data\Code\src\Longhua.Collector\bin\Debug\test2.phased.jsonl
+.\Longhua.Collector.exe phase --input=D:\workspace\SHLH\longhua-data\Code\src\Longhua.Collector\bin\Debug\test2.txt --block-length=494 --point-table=config\plc-conveyor.json --output=D:\workspace\SHLH\longhua-data\Code\src\Longhua.Collector\bin\Debug\test2.phased.jsonl
 ```
+
+> 若 dump 是旧文件且每帧仍是 **514** 字节（如早期 `test2.txt`），把 `--block-length` 改成 `514`。新采集的 `plc.txt` 为 **494**。
 
 | 参数 | 含义 |
 |---|---|
 | `--input` / `-i` | dump 文件路径（可用绝对路径，文件可放在程序目录外） |
-| `--block-length` / `-b` | 每块原始字节数（`test2.txt` 用 **514**） |
+| `--block-length` / `-b` | 每块原始字节数（新采集 **494**；旧 `test2.txt` 用 **514**） |
 | `--point-table` / `-p` | 点表；写 `config\plc-conveyor.json` 时表示本目录下的 `config\` |
 | `--output` / `-o` | 输出 JSONL；省略则在 input 旁生成 `*.phased.jsonl` |
 
@@ -202,15 +204,15 @@ cd D:\workspace\SHLH\longhua-data\Code\src\Longhua.Collector\bin\Debug\net6.0
 日志类似：
 
 ```
-phase Input=... BlockLength=514 PointTable=...\config\plc-conveyor.json Output=...
-phase 完成 Input=... Frames=7445 Rows=171235 Stations=23 BlockLength=514 Output=...
+phase Input=... BlockLength=494 PointTable=...\config\plc-conveyor.json Output=...
+phase 完成 Input=... Frames=... Rows=... Stations=38 BlockLength=494 Output=...
 ```
 
 | 字段 | 含义 |
 |---|---|
 | `Frames` | dump 里读到的 PLC 帧数 |
-| `Stations` | 点表里 **enabled=true** 的工位数 |
-| `Rows` | 写出行数，应满足 **Rows ≈ Frames × Stations**（上例 `7445×23=171235`） |
+| `Stations` | 点表里 **enabled=true** 的工位数（完整点表应为 **38**） |
+| `Rows` | 写出行数，应满足 **Rows ≈ Frames × Stations**（例如 `Frames×38`） |
 
 工位范围由 **`config\plc-conveyor.json` 决定**，不是写死在程序里：
 
@@ -262,7 +264,7 @@ S7 `Enabled` 是否为 true；IP/Rack/Slot/DB 是否对；防火墙 102；日志
 `ClientId` 重复。
 
 **phase 报块长度不符**  
-`--block-length` 要与 dump 每帧字节数一致（`test2` 为 514）。
+`--block-length` 要与 dump 每帧字节数一致：新采集 **494**；旧 `test2` 为 **514**。
 
 **phase 已完成但 Stations 不是 38**  
 看日志 `Stations=`：等于点表里 enabled 工位数。若是 `23`，通常是旧 `plc-conveyor.json`（仅 1016–1038）。把仓库里最新点表拷进本目录 `config\`，或重新 `dotnet build` 后再跑。用 `Rows == Frames × Stations` 自检。
@@ -295,6 +297,6 @@ S7 `Enabled` 是否为 true；IP/Rack/Slot/DB 是否对；防火墙 102；日志
 | 停止采集 | `Ctrl+C` |
 | 改 MQTT/PLC 地址 | 改 `config\appsettings.json`，重启 |
 | 看数据 | `data\当天日期\mqtt.jsonl` 与 `plc.txt` |
-| 解析旧 PLC 文件 | 先 `cd` 到程序目录，再 `.\Longhua.Collector.exe phase --input=... --block-length=514 ...` |
+| 解析旧 PLC 文件 | 先 `cd` 到程序目录；新 dump 用 `--block-length=494`，旧 514 帧 dump 用 `514` |
 | 核对 phase 结果 | 看日志 `Frames` / `Stations` / `Rows`，且 `Rows ≈ Frames × Stations` |
 | 换电脑 | 拷整个文件夹，换新 `ClientId` |

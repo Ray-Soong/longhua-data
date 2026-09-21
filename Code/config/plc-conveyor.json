@@ -1,7 +1,7 @@
 {
   "name": "ConveyorInfor",
-  "version": 2,
-  "description": "库外输送线点表。模型关注工位 1001–1038（38 点），有效区 494 字节（0..493）。",
+  "version": 3,
+  "description": "库外输送线点表。只采工位 1001–1038（38 点），读取长度 494 字节（0..493）。",
   "plc": {
     "cpu": "CPU 1215C DC/DC/DC",
     "ip": "172.168.0.9",
@@ -13,7 +13,7 @@
     "dbName": "ConveyorInfor",
     "start": 0,
     "length": 494,
-    "readLength": 514,
+    "readLength": 494,
     "byteOrder": "BigEndian",
     "intervalMs": 200,
     "writeRawEveryPoll": true
@@ -25,7 +25,7 @@
       "stationCount": 38,
       "offset": 0,
       "length": 494,
-      "comment": "Unity/解析只关心前 494 字节；采集可读更长（readLength），解析时按 stations 切片"
+      "comment": "1038 Module@478 结束于 494；1039 及以后不在范围内。历史 dump 若整帧 514，phase 用 --block-length=514，仍只解本表 38 工位"
     }
   },
   "types": {

@@ -34,7 +34,7 @@ MQTT 与 S7 在现场不是同一种东西：
 - MQTT 回调线程禁止写盘；S7 轮询线程只写独立 PLC dump（或投递队列），规范化写盘走消费者。
 - 不要把 S7 字节伪装成 Topic 再进 `MqttSource`。
 - Payload 保持设备原结构：不把立库 JSON 硬折成 S7 DB，也不把 S7 字节硬折成立库 Topic。
-- Unity 模型当前只关心工位 **1001–1038（38 点）**，有效区 **494 字节**；采集可读更长（如 514）。
+- Unity 模型当前只关心工位 **1001–1038（38 点）**，读取长度 **494** 字节。
 
 ---
 
@@ -101,8 +101,7 @@ modelName / majorVersion / HUAZH / serialNumber / suffix
 | 块 | `ConveyorInfor` **DB3** |
 | PLC | 如 `172.168.0.9`（见配置） |
 | 模型工位 | **1001–1038**，共 38 个 |
-| 有效长度 | **494** 字节（`plc.length`） |
-| 整帧读长 | 可配置（`Polls[].Length` / `readLength`，现场 dump 常见 **514**） |
+| 读取长度 | **494** 字节（`plc.length` / `plc.readLength` / `Polls[].Length`） |
 
 工位类型：
 
@@ -188,7 +187,7 @@ DB3.0
 | `config/plc-conveyor.json` | PLC 点表（types + stations 1001–1038） |
 | `appsettings.Local.json` | 现场覆盖（勿提交） |
 
-S7 `Polls[].Length`：模型关注用 **494**；若需与旧 dump 对齐可读 **514**，phase 时用 `--block-length=514`，点表仍只解到 1038。
+S7 `Polls[].Length` / 点表 `length`/`readLength`：**494**。历史 dump（如早期 `test2.txt`）若整帧仍是 514，phase 时加 `--block-length=514`，点表仍只解 1001–1038。
 
 ---
 
@@ -220,5 +219,5 @@ S7 `Polls[].Length`：模型关注用 **494**；若需与旧 dump 对齐可读 *
 1. Broker 地址、端口、TLS、账号、唯一 `ClientId`。
 2. 现场 Topic serial 是否与 `Subscriptions` 一致。
 3. PLC IP / Rack / Slot / DB3；点表与 TIA 是否一致（尤其 1001–1015）。
-4. collection 的读长（494 vs 514）与 phase 的 `--block-length`。
+4. collection / phase 默认块长均为 **494**；解析旧 514 字节 dump 时再显式传 `--block-length=514`。
 5. 数据目录与 `KeepDays`。
